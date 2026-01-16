@@ -1,4 +1,5 @@
 # 간단 사용법:
+# 간단 사용법:
 # 1) 필요한 패키지: python3 -m pip install selenium webdriver-manager
 # 2) macOS에서 실행
 from urllib.parse import urljoin, urlparse
@@ -10,8 +11,6 @@ from selenium.webdriver.support import expected_conditions as EC
 import os
 import time
 
-
-# search_url = "https://naver.com"
 
 def get_chrome_service():
     try:
@@ -42,9 +41,13 @@ def get_chrome_binary():
     return None
 
 def search_answer(wait_seconds=20, keep_open=False, quiz_name=None):
+    event_id2 = "pass"
     search_url = "https://cashdoc.me/hospitalevent/search?keyword=" + quiz_name
     opts = webdriver.ChromeOptions()
-    opts.add_argument("--start-maximized")
+    # opts.add_argument("--start-maximized")
+    opts.add_argument("--window-size=400,300")
+    opts.add_argument("--window-position=1500,900")
+
     # 필요시 세션 유지하려면 아래 주석 해제하고 경로 변경
     # opts.add_argument("--user-data-dir=/Users/<you>/Library/Application Support/Google/Chrome")
 
@@ -58,10 +61,6 @@ def search_answer(wait_seconds=20, keep_open=False, quiz_name=None):
     try:
         driver.set_page_load_timeout(30)
         driver.get(search_url)
-        print("opened:", driver.current_url)
-
-        # 디버그: 처음 400자 출력 (문제가 있을 때 확인용)
-        print(driver.page_source[:400])
 
         wait = WebDriverWait(driver, wait_seconds)
         container_xpath = '//*[@id="__next"]/div/div/div/div/div/div[2]/div[3]/div'
@@ -80,7 +79,6 @@ def search_answer(wait_seconds=20, keep_open=False, quiz_name=None):
 
         # 각 아이템에서 제목 추출 (우선 내부 div 텍스트, 없으면 img@alt 사용)
         titles = []
-        print("quiz_name:",quiz_name)
         for i, item in enumerate(items):
             try:
                 # 상대 XPath로 제목 div 선택 (구조: .../a/.../div[1]/div[1]/div)
@@ -93,7 +91,6 @@ def search_answer(wait_seconds=20, keep_open=False, quiz_name=None):
                     # title = title_el.text.strip()
                     # link_href = item.find_element(By.XPATH, '//*[@id="__next"]/div/div/div/div/div/div[2]/div[3]/div/div[2]/div[1]/a').get_attribute("href")
                     link_href = anchor.get_attribute("href")
-                    print("link_jref", link_href)
                 except Exception:
                     title = ""
 
@@ -110,12 +107,9 @@ def search_answer(wait_seconds=20, keep_open=False, quiz_name=None):
                 print(f"[{i}] {title}")
                 titles.append(title)
 
-                
-
                 # 돌면서 찾는 이벤트랑 비교
                 if quiz_name and title == quiz_name:
                     print(f"정답 발견! item[{i}] 제목:", title)
-                    print(link_href)
 
                     path = urlparse(link_href).path
                     parts = [p for p in path.split('/') if p]
@@ -125,8 +119,6 @@ def search_answer(wait_seconds=20, keep_open=False, quiz_name=None):
                         event_id2 = parts[idx + 1]
                     except ValueError:
                         pass
-
-                    print("event_id2:", event_id2)
                     
                     # time.sleep(1)
                     break
