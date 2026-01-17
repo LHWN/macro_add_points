@@ -17,6 +17,7 @@ from appium.options.ios import XCUITestOptions
 from appium import webdriver
 from selenium.webdriver.common.options import ArgOptions
 from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import StaleElementReferenceException
 
 ##
 ## 연결 끊겼을 떄
@@ -55,6 +56,8 @@ driver = webdriver.Remote("http://127.0.0.1:4723", options=options)
 
 wait = WebDriverWait(driver, 10)
 QUIZ_MAPPING = {
+    "분당 즉각효과 프라임레이즈": "https://cashdoc.me/hospitalevent/eventdetail/7197",
+    "이갈이보톡스 코어톡스, 라인은 덤": "https://cashdoc.me/hospitalevent/eventdetail/6974",
     "예쁨 2배, 클리피씨교정": "https://cashdoc.me/hospitalevent/eventdetail/6920",
     "클리피씨 교정 8.9만원": "https://cashdoc.me/hospitalevent/eventdetail/6920",
     "미케이 내게 꼭 맞는 여드름피부 관리": "https://cashdoc.me/hospitalevent/eventdetail/6990",
@@ -123,8 +126,8 @@ QUIZ_MAPPING = {
     "에이탑 올리프팅": "https://cashdoc.me/hospitalevent/eventdetail/5467",
     "베리굿♡V라인 실리프팅": "https://cashdoc.me/hospitalevent/eventdetail/1894",
     "HOT 올리지오 리프팅": "https://cashdoc.me/hospitalevent/eventdetail/1424",
-    # "인모드리프팅": "https://cashdoc.me/hospitalevent/eventdetail/1643",
-    "인모드리프팅": "https://cashdoc.me/hospitalevent/eventdetail/1827",
+    "인모드리프팅": "https://cashdoc.me/hospitalevent/eventdetail/1643",
+    # "인모드리프팅": "https://cashdoc.me/hospitalevent/eventdetail/1827",
     "민트실리프팅": "https://cashdoc.me/hospitalevent/eventdetail/1828",
     "❤뷰❤써마지 FLX 리프팅": "https://cashdoc.me/hospitalevent/eventdetail/5705",
     "이중턱&목 리프팅": "https://cashdoc.me/hospitalevent/eventdetail/2837",
@@ -1457,9 +1460,8 @@ def solve_quiz():
 
                     alert = driver.switch_to.alert
                     if alert:
-                        alert_text = alert.text
                         alert.accept()
-                        print(f"✅ 알림창 감지 및 해결: {alert_text}")
+                        print(f"✅ 알림창 감지 및 해결: {alert.text}")
 
                         previous_btn = driver.find_elements(AppiumBy.ACCESSIBILITY_ID, "icCPQBackBlack")
                         if previous_btn:
@@ -1475,9 +1477,9 @@ def solve_quiz():
                 try:
                     # 정답 입력하기 버튼 클릭
                     print("정답 입력하기 버튼 클릭")
-                    # insert_answer = wait.until(
-                    EC.element_to_be_clickable((AppiumBy.XPATH, "//XCUIElementTypeStaticText[@name='정답 입력하기']"))
-                    # )
+                    insert_answer = wait.until(
+                        EC.element_to_be_clickable((AppiumBy.XPATH, "//XCUIElementTypeStaticText[@name='정답 입력하기']"))
+                    )
                     insert_answer.click()
                 except Exception:
                     print("이미 풀었음")
@@ -1509,24 +1511,31 @@ def solve_quiz():
                         continue
 
                 print("키워드 복사 후 정답 찾으러 가기 클릭")
-                # 키워드 복사 후 정답 찾으러 가기 클릭
-                go_find_answer = wait.until(
-                    EC.element_to_be_clickable((AppiumBy.XPATH, '//XCUIElementTypeStaticText[@name="키워드 복사 후 정답 찾으러 가기"]'))
-                )
-                go_find_answer.click()
+                try:
+                    # 키워드 복사 후 정답 찾으러 가기 클릭
+                    go_find_answer = wait.until(
+                        EC.element_to_be_clickable((AppiumBy.XPATH, '//XCUIElementTypeStaticText[@name="키워드 복사 후 정답 찾으러 가기"]'))
+                    )
+                    go_find_answer.click()
+                except Exception as e:
+                    print(e)
 
                 # handles = driver.window_handles
                 # driver.switch_to.window(handles[-1])  # 마지막 윈도우 핸들로 전환
                 # driver.close()  # 현재 윈도우 닫기
+                
+                try:
+                    sleep(2)
+                    driver.activate_app("com.cashwalk.cashdoc")
 
-                driver.activate_app("com.cashwalk.cashdoc")
-
-                # 유효한 문제면 풀기
-                # 정답 입력하기 버튼 클릭
-                insert_answer = wait.until(
-                    EC.element_to_be_clickable((AppiumBy.XPATH, "//XCUIElementTypeStaticText[@name='정답 입력하기']"))
-                )
-                insert_answer.click()
+                    # 유효한 문제면 풀기
+                    # 정답 입력하기 버튼 클릭
+                    insert_answer = wait.until(
+                        EC.element_to_be_clickable((AppiumBy.XPATH, "//XCUIElementTypeStaticText[@name='정답 입력하기']"))
+                    )
+                    insert_answer.click()
+                except Exception as e:
+                    print(e)
 
                 answer = QUIZ_MAPPING.get(quiz_name)
 
@@ -1659,19 +1668,34 @@ def solve_quiz():
 # 목록에서 미리 성형 이벤트인지 확인 
 def check_quiz_isAvailabe():
     # 목록에서 퀴즈명 가져오기
-    text_field = wait.until(
-        EC.element_to_be_clickable((AppiumBy.XPATH, "//XCUIElementTypeCollectionView/XCUIElementTypeCell[1]//XCUIElementTypeStaticText"))
-    )
-    quiz_text = text_field.get_attribute("label")
+    # text_field = wait.until(
+    #     EC.element_to_be_clickable((AppiumBy.XPATH, "//XCUIElementTypeCollectionView/XCUIElementTypeCell[1]//XCUIElementTypeStaticText"))
+    # )
+    # quiz_text = text_field.get_attribute("label")
+    for _ in range(3):  # 최대 3번 재시도
+        try:
+            text_field = wait.until(
+                EC.element_to_be_clickable((AppiumBy.XPATH, "//XCUIElementTypeCollectionView/XCUIElementTypeCell[1]//XCUIElementTypeStaticText"))
+            )
+            quiz_text = text_field.get_attribute("label")
+            if quiz_text:
+                break  # 성공하면 루프 탈출
+        except StaleElementReferenceException:
+            time.sleep(0.5)  # 잠시 대기 후 다시 시도
+            continue
+        
     # 해당 요소의 name 속성(실제 텍스트)을 가져와서 변수에 저장
     
     print(f"찾은 텍스트는: {quiz_text}")
 
-    if "이벤트" in quiz_text:
-        print("이벤트 포함 확인")
-        return True
-    else:
-        return False
+    return True
+    
+    # 목록만 보고 성형 이벤트인지 판단 힘듦
+    # if "이벤트" in quiz_text:
+    #     print("이벤트 포함 확인")
+    #     return True
+    # else:
+    #     return False
 
 def back_refresh():
     back_btn = driver.find_elements(AppiumBy.ACCESSIBILITY_ID, "뒤로")
