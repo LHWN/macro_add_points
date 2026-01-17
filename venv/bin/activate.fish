@@ -33,7 +33,7 @@ end
 # Unset irrelevant variables.
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV "/Users/lhwn/Documents/workspace/macro_add_points/venv"
+set -gx VIRTUAL_ENV "/Users/lhwn/Documents/workspace/macro-add-points/venv"
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/bin" $PATH

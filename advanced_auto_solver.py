@@ -18,6 +18,7 @@ from appium import webdriver
 from selenium.webdriver.common.options import ArgOptions
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import StaleElementReferenceException
+from datetime import datetime
 
 ##
 ## 연결 끊겼을 떄
@@ -1415,6 +1416,7 @@ QUIZ_MAPPING = {
 # (//XCUIElementTypeImage[@name="imgLivequiz"])[1]
 
 def solve_quiz():
+    start_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     answer = None
     sequence = 1
     find_count = 0
@@ -1458,14 +1460,36 @@ def solve_quiz():
                     if previous_btn:
                         previous_btn[0].click()
 
-                    alert = driver.switch_to.alert
-                    if alert:
+                    try:
+                        alert = driver.switch_to.alert
+                        alert_text = alert.text
                         alert.accept()
-                        print(f"✅ 알림창 감지 및 해결: {alert.text}")
+                        print(f"✅ 시스템 알림창 해결: {alert_text}")
 
-                        previous_btn = driver.find_elements(AppiumBy.ACCESSIBILITY_ID, "icCPQBackBlack")
-                        if previous_btn:
-                            previous_btn[0].click()
+                        previous_btn = wait.until(
+                            EC.element_to_be_clickable((AppiumBy.ACCESSIBILITY_ID, 'icCPQBackBlack'))
+                        )
+                        previous_btn.click()
+                    except NoAlertPresentException:
+                        # 시스템 알림이 없으면 조용히 통과
+                        pass
+
+                    # 네트워크 오류 나면 처리
+                    # try:
+                    #     alert = driver.switch_to.alert
+                    #     alert_text = alert.text  # 텍스트를 먼저 가져옴
+                    #     alert.accept()
+                    #     print(f"✅ 시스템 알림창 해결: {alert_text}")
+                    #     previous_btn = driver.find_elements(AppiumBy.ACCESSIBILITY_ID, "icCPQBackBlack")
+                    #     if previous_btn:
+                    #         previous_btn[0].click()
+
+                    # except NoAlertPresentException:
+                    #     # 알림창이 없으면 그냥 아무것도 안 하고 넘어감
+                    #     pass
+
+
+                        
 
                     # 1번 못풀면 2번으로 바꾸고, 2번 못풀면 1번으로 바꾸면서 계속 확인
                     if sequence == 1:
@@ -1488,10 +1512,11 @@ def solve_quiz():
                         if previous_btn:
                             previous_btn[0].click()
                     elif sequence == 2:
+                        print("이미 다 풀고 2번임")
                         previous_btn = driver.find_elements(AppiumBy.ACCESSIBILITY_ID, "icCPQBackBlack")
                         if previous_btn:
                             previous_btn[0].click()
-                        back_refresh()
+                        # back_refresh()
 
                     if sequence == 1:
                         sequence = 2
@@ -1658,6 +1683,8 @@ def solve_quiz():
             print(f"바로 찾기 성공 총 {find_count}회")
             print(f"검색 찾기 성공 총 {search_count}회")
             print(f"정답 제출 성공 총 {find_count + search_count}회")
+            print(f"시작 시간 : {start_time}")
+            print(f"종료 시간 : {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}")
             driver.quit()
             # sleep(10)
             # continue
@@ -1698,14 +1725,32 @@ def check_quiz_isAvailabe():
     #     return False
 
 def back_refresh():
-    back_btn = driver.find_elements(AppiumBy.ACCESSIBILITY_ID, "뒤로")
-    if back_btn:
-        back_btn[0].click()
+    print("back_refresh 진입")
+
+    previous_btn = wait.until(
+        EC.element_to_be_clickable((AppiumBy.ACCESSIBILITY_ID, 'icCPQBackBlack'))
+    )
+    previous_btn.click()
     # 용돈퀴즈 버튼 클릭
     money_quiz_button = wait.until(
-        lambda d: d.find_element(AppiumBy.ACCESSIBILITY_ID, "용돈퀴즈 용돈퀴즈")  # Accessibility ID 정확히 확인
+    lambda d: d.find_element(AppiumBy.ACCESSIBILITY_ID, "용돈퀴즈 용돈퀴즈")  # Accessibility ID 정확히 확인
     )
     money_quiz_button.click()
+
+    print("용돈퀴즈 클릭")
+
+    # text_field = wait.until(
+    #     EC.element_to_be_clickable((AppiumBy.XPATH, "//XCUIElementTypeCollectionView/XCUIElementTypeCell[1]//XCUIElementTypeStaticText"))
+    # )
+    # quiz_text = text_field.get_attribute("label")
+    # print(quiz_text)
+
+    # target_words = ["카복시", "더원츠의원", "발지압"]
+
+    # if not any(word in quiz_text for word in target_words):
+    #     break
+
+    sleep(5)
 
 def solve_effective_quiz(quiz_name, sequence):
     # 정답 입력하기 버튼 클릭
@@ -1793,6 +1838,8 @@ def solve_effective_quiz(quiz_name, sequence):
 
 
 if __name__ == "__main__":
+    
+
     while True:
         solve_quiz()
     

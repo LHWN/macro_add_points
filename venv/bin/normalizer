@@ -1,4 +1,4 @@
-#!/Users/lhwn/Documents/workspace/macro_add_points/venv/bin/python3.12
+#!/Users/lhwn/Documents/workspace/macro-add-points/venv/bin/python3.12
 # -*- coding: utf-8 -*-
 import re
 import sys
