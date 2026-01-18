@@ -160,8 +160,8 @@ def get_initial_consonant(naver_place):
     return "".join(result)
 
     
-def solve_quiz_by_initial_consonant(quiz_contents):
-    event_store = get_event_store(quiz_contents)
+def solve_quiz_by_initial_consonant(quiz_contents, event_store):
+    # event_store = get_event_store(quiz_contents)
     event_category = get_event_category(quiz_contents)
     event_initial_consonant = get_event_initial_consonant(quiz_contents)
     place_names = get_naver_places(event_store, event_category)

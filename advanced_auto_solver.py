@@ -20,6 +20,8 @@ from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import StaleElementReferenceException
 from datetime import datetime
 from extract_initial_consonant import solve_quiz_by_initial_consonant, get_event_store
+import signal
+import sys
 
 ##
 ## 연결 끊겼을 떄
@@ -27,6 +29,12 @@ from extract_initial_consonant import solve_quiz_by_initial_consonant, get_event
 ## 2. 빌드 클린
 ## 3. 빌드
 ##
+
+## 가상환경 on
+# source venv/bin/activate
+
+## cron kill
+# pkill -f advanced_auto_solver.py
 
 # 1. 껍데기만 있는 옵션 객체 생성
 options = ArgOptions()
@@ -43,6 +51,7 @@ caps = {
     "appium:noReset": True,
     "appium:useNewWDA": False,
     "autoDismissAlerts": False,
+    "appium:newCommandTimeout": 300
 }
 
 for key, value in caps.items():
@@ -57,6 +66,7 @@ driver = webdriver.Remote("http://127.0.0.1:4723", options=options)
 # driver = webdriver.Remote("http://localhost:4723", options=options)
 
 wait = WebDriverWait(driver, 3)
+
 LINK_QUIZ_MAPPING = {
     "덴티움 임플란트 49만원": "https://cashdoc.me/hospitalevent/eventdetail/6143",
     "분당 즉각효과 프라임레이즈": "https://cashdoc.me/hospitalevent/eventdetail/7197",
@@ -1416,6 +1426,14 @@ INITIAL_CONSONANT_QUIZ_MAPPING = {
     "에시르의원": "화목공방",
     "좋은아침한의원 구로디지털점": "꿈마을도서관",
     "에이라인치과병원": "정석볼링장",
+    "더엘리트 PT 연산양정점": "원각사",
+    "": "",
+    "": "",
+    "": "",
+    "": "",
+    "": "",
+    "": "",
+    "": "",
     "": "",
     "": "",
 }
@@ -1591,10 +1609,11 @@ def solve_quiz():
                     print("바로 찾기 결과 : ", answer)
                     find_count += 1
                 elif answer is None and "카테고리" in quiz_contents:
-                    event_store = get_event_store(quiz_contents)
+                    # event_store = get_event_store(quiz_contents)
+                    event_store = result
                     answer = INITIAL_CONSONANT_QUIZ_MAPPING.get(event_store)
                     if answer is None:
-                        answer = solve_quiz_by_initial_consonant(quiz_contents)
+                        answer = solve_quiz_by_initial_consonant(quiz_contents, event_store)
                 else:
                     print("[", sequence, "] 검색 찾기:", quiz_name)
                     # 빡치게 하는 퀴즈면
@@ -1721,6 +1740,14 @@ def solve_quiz():
         except Exception:
             pass
 
+def graceful_exit(signum, frame):
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"\n[{now}] 외부 신호(SIGTERM/SIGINT)에 의해 프로그램이 강제 종료되었습니다.", flush=True)
+    # 여기에 종료 전 수행할 작업(예: 브라우저 닫기, 파일 저장 등)을 추가할 수 있습니다.
+    sys.exit(0)
+
+signal.signal(signal.SIGTERM, graceful_exit)
+signal.signal(signal.SIGINT, graceful_exit)
 
 # 목록에서 미리 성형 이벤트인지 확인 
 def check_quiz_isAvailabe():
@@ -1868,6 +1895,21 @@ def solve_effective_quiz(quiz_name, sequence):
 
 
 if __name__ == "__main__":
-    while True:
-        solve_quiz()
-    
+    max_retries = 3  # 최대 재시도 횟수
+    retry_count = 0   # 현재 재시도 횟수
+
+    while retry_count < max_retries:
+        try:
+            print(f"{datetime.now().strftime("%Y-%m-%d %H:%M:%S")} 프로그램 시작", flush=True)
+            solve_quiz()
+        except Exception as e:
+            retry_count += 1
+            print(f"루프 중단됨 ({e}). 전체 재시작 중...")
+            if retry_count >= max_retries:
+                print("!!! 최대 재시도 횟수(20회)를 초과하여 프로그램을 종료합니다. !!!")
+                break  # 루프 탈출
+        
+            print(f"5초 후 다시 시작합니다... (현재 {retry_count}/{max_retries})")
+            time.sleep(5)  # 재시작 전 대기
+    print("프로그램이 완전히 종료되었습니다.")
+            
