@@ -1,5 +1,3 @@
-# 간단 사용법:
-# 간단 사용법:
 # 1) 필요한 패키지: python3 -m pip install selenium webdriver-manager
 # 2) macOS에서 실행
 from urllib.parse import urljoin, urlparse

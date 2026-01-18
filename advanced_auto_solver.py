@@ -19,6 +19,7 @@ from selenium.webdriver.common.options import ArgOptions
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import StaleElementReferenceException
 from datetime import datetime
+from extract_initial_consonant import solve_quiz_by_initial_consonant, get_event_store
 
 ##
 ## 연결 끊겼을 떄
@@ -55,8 +56,9 @@ driver = webdriver.Remote("http://127.0.0.1:4723", options=options)
 ## rm -rf ~/Library/Developer/Xcode/DerivedData/*
 # driver = webdriver.Remote("http://localhost:4723", options=options)
 
-wait = WebDriverWait(driver, 10)
-QUIZ_MAPPING = {
+wait = WebDriverWait(driver, 3)
+LINK_QUIZ_MAPPING = {
+    "덴티움 임플란트 49만원": "https://cashdoc.me/hospitalevent/eventdetail/6143",
     "분당 즉각효과 프라임레이즈": "https://cashdoc.me/hospitalevent/eventdetail/7197",
     "이갈이보톡스 코어톡스, 라인은 덤": "https://cashdoc.me/hospitalevent/eventdetail/6974",
     "예쁨 2배, 클리피씨교정": "https://cashdoc.me/hospitalevent/eventdetail/6920",
@@ -1404,7 +1406,19 @@ QUIZ_MAPPING = {
     "비절개모발이식": "https://cashdoc.me/hospitalevent/eventdetail/6232"
 }
 
-
+INITIAL_CONSONANT_QUIZ_MAPPING = {
+    "스파라 프리미어 슈가링 왁싱 해운대 본점": "키자니아부산",
+    "이비안한의원": "캑터스",
+    "필라테스 위아영 가양등촌점": "노리공작소",
+    "옥스치과의원": "전기박물관",
+    "삼성정형외과": "어울림공원",
+    "꽃한모금 마곡점": "노리공작소",
+    "에시르의원": "화목공방",
+    "좋은아침한의원 구로디지털점": "꿈마을도서관",
+    "에이라인치과병원": "정석볼링장",
+    "": "",
+    "": "",
+}
 
 # # 용돈퀴즈 버튼 클릭
 # money_quiz_button = wait.until(
@@ -1425,8 +1439,15 @@ def solve_quiz():
     try:
         while True:
             rohasel = False
-            result = check_quiz_isAvailabe()
-            
+            try:
+                result = check_quiz_isAvailabe()
+            except Exception as e:
+                print(f"퀴즈 확인 중 오류 발생: {e}")
+                continue
+            print(f"목록에서 가져온 이벤트명 : {result}")
+
+
+
             if result:
                 try:
                     quiz_button = wait.until(
@@ -1452,27 +1473,33 @@ def solve_quiz():
                 print("퀴즈 내용 전체:", quiz_contents)
                 print("[", sequence, "] quiz_name", quiz_name)   
 
-                # 초성 퀴즈면
-                if quiz_name == "":
-                    print("이벤트 퀴즈 아님 sequence : ", sequence, " quiz_name : ", quiz_name)
+                # if quiz_name == "":
+                #     print("이벤트 퀴즈 아님 sequence : ", sequence, " quiz_name : ", quiz_name)
                     
-                    previous_btn = driver.find_elements(AppiumBy.ACCESSIBILITY_ID, "icCPQBackBlack")
-                    if previous_btn:
-                        previous_btn[0].click()
+                #     previous_btn = driver.find_elements(AppiumBy.ACCESSIBILITY_ID, "icCPQBackBlack")
+                #     if previous_btn:
+                #         previous_btn[0].click()
 
-                    try:
-                        alert = driver.switch_to.alert
-                        alert_text = alert.text
-                        alert.accept()
-                        print(f"✅ 시스템 알림창 해결: {alert_text}")
+                #     try:
+                #         alert = driver.switch_to.alert
+                #         alert_text = alert.text
+                #         alert.accept()
+                #         print(f"✅ 시스템 알림창 해결: {alert_text}")
 
-                        previous_btn = wait.until(
-                            EC.element_to_be_clickable((AppiumBy.ACCESSIBILITY_ID, 'icCPQBackBlack'))
-                        )
-                        previous_btn.click()
-                    except NoAlertPresentException:
-                        # 시스템 알림이 없으면 조용히 통과
-                        pass
+                #         previous_btn = wait.until(
+                #             EC.element_to_be_clickable((AppiumBy.ACCESSIBILITY_ID, 'icCPQBackBlack'))
+                #         )
+                #         previous_btn.click()
+                #     except Exception:
+                #         # 시스템 알림이 없으면 조용히 통과
+                #         pass
+                #     # 1번 못풀면 2번으로 바꾸고, 2번 못풀면 1번으로 바꾸면서 계속 확인
+                #     if sequence == 1:
+                #         sequence = 2
+                #     elif sequence == 2:
+                #         sequence = 1
+                #     continue
+
 
                     # 네트워크 오류 나면 처리
                     # try:
@@ -1491,13 +1518,7 @@ def solve_quiz():
 
                         
 
-                    # 1번 못풀면 2번으로 바꾸고, 2번 못풀면 1번으로 바꾸면서 계속 확인
-                    if sequence == 1:
-                        sequence = 2
-                    elif sequence == 2:
-                        sequence = 1
-                    continue
-
+                    
                 try:
                     # 정답 입력하기 버튼 클릭
                     print("정답 입력하기 버튼 클릭")
@@ -1562,15 +1583,25 @@ def solve_quiz():
                 except Exception as e:
                     print(e)
 
-                answer = QUIZ_MAPPING.get(quiz_name)
+                answer = LINK_QUIZ_MAPPING.get(quiz_name)
 
                 # 정답 찾아오기
-                if answer is None:
+                if answer is not None:
+                    print("바로 찾기:", quiz_name)
+                    print("바로 찾기 결과 : ", answer)
+                    find_count += 1
+                elif answer is None and "카테고리" in quiz_contents:
+                    event_store = get_event_store(quiz_contents)
+                    answer = INITIAL_CONSONANT_QUIZ_MAPPING.get(event_store)
+                    if answer is None:
+                        answer = solve_quiz_by_initial_consonant(quiz_contents)
+                else:
                     print("[", sequence, "] 검색 찾기:", quiz_name)
                     # 빡치게 하는 퀴즈면
                     if quiz_name == "로하셀한의원 다이어트 뺄타임 처방":
-                        event_ids = ["정답1", "정답2", "정답3", "정답4", "정답5", "정답6", "정답7", "정답8"]
-                        for event_id in enumerate(event_ids):
+                        event_ids = ["6431", "6479", "6433", "6435", "6478", "6660", "6432", "6478"]
+                        # for event_id in enumerate(event_ids):
+                        for event_id in event_ids:
                             answer = "https://cashdoc.me/hospitalevent/eventdetail/" + event_id
                             print(f"로하셀 {event_id} 시도")
 
@@ -1584,8 +1615,8 @@ def solve_quiz():
                             text_field.send_keys(answer)
                             text_field.send_keys(Keys.RETURN)
 
-                            # 정답이면 (정답 워딩 찾으면)                                
-                            if a=="":
+                            # 정답이면
+                            try:
                                 # X 버튼 클릭 (accessibility id)
                                 x_btn = wait.until(
                                         EC.element_to_be_clickable((AppiumBy.ACCESSIBILITY_ID, 'icCloseBlack'))
@@ -1598,7 +1629,7 @@ def solve_quiz():
                                     )
                                 previous_btn.click()
                                 rohasel = True 
-
+                            except: 
                                 # for 문만 빠져나가기 
                                 break
 
@@ -1610,12 +1641,9 @@ def solve_quiz():
                         answer = "https://cashdoc.me/hospitalevent/eventdetail/" + event_id
                         print("검색 찾기 결과 : ", answer)
                     search_count += 1
-                else:
-                    print("바로 찾기:", quiz_name)
-                    print("바로 찾기 결과 : ", answer)
-                    find_count += 1
+                   
 
-                print("정답 URL:", answer)
+                print("정답:", answer)
 
 
                 # 이벤트 정답 입력
@@ -1670,9 +1698,11 @@ def solve_quiz():
                         )
                     previous_btn.click()
                 except Exception:
-                    x_btn = driver.find_elements(AppiumBy.ACCESSIBILITY_ID, "icCloseBlack")
-                    if x_btn:
-                        x_btn.click()
+                    # X 버튼 클릭 (accessibility id)
+                    x_btn = wait.until(
+                            EC.element_to_be_clickable((AppiumBy.ACCESSIBILITY_ID, 'icCloseBlack'))
+                        )
+                    x_btn.click()
 
             # 목록에서 성형 이벤트 아니면 나갔다가 다시 들어오기
             else:
@@ -1715,7 +1745,7 @@ def check_quiz_isAvailabe():
     
     print(f"찾은 텍스트는: {quiz_text}")
 
-    return True
+    return quiz_text
     
     # 목록만 보고 성형 이벤트인지 판단 힘듦
     # if "이벤트" in quiz_text:
@@ -1759,7 +1789,7 @@ def solve_effective_quiz(quiz_name, sequence):
     )
     insert_answer.click()
 
-    answer = QUIZ_MAPPING.get(quiz_name)
+    answer = LINK_QUIZ_MAPPING.get(quiz_name)
 
     # 정답 찾아오기
     if answer is None:
@@ -1838,8 +1868,6 @@ def solve_effective_quiz(quiz_name, sequence):
 
 
 if __name__ == "__main__":
-    
-
     while True:
         solve_quiz()
     

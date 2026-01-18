@@ -56,7 +56,7 @@ while True:
     #     back_btn[0].click()
 
     previous_btn = wait.until(
-        EC.element_to_be_clickable((AppiumBy.ACCESSIBILITY_ID, 'icCPQBackBlack'))
+        EC.element_to_be_clickable((AppiumBy.ACCESSIBILITY_ID, '뒤로'))
     )
     previous_btn.click()
     # 용돈퀴즈 버튼 클릭
