@@ -51,9 +51,14 @@ driver = webdriver.Remote("http://127.0.0.1:4723", options=options)
 wait = WebDriverWait(driver, 10)
 
 while True:
-    back_btn = driver.find_elements(AppiumBy.ACCESSIBILITY_ID, "뒤로")
-    if back_btn:
-        back_btn[0].click()
+    # back_btn = driver.find_elements(AppiumBy.ACCESSIBILITY_ID, "뒤로")
+    # if back_btn:
+    #     back_btn[0].click()
+
+    previous_btn = wait.until(
+        EC.element_to_be_clickable((AppiumBy.ACCESSIBILITY_ID, 'BackButton'))
+    )
+    previous_btn.click()
     # 용돈퀴즈 버튼 클릭
     money_quiz_button = wait.until(
     lambda d: d.find_element(AppiumBy.ACCESSIBILITY_ID, "용돈퀴즈 용돈퀴즈")  # Accessibility ID 정확히 확인
