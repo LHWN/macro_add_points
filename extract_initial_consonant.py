@@ -185,6 +185,9 @@ if __name__ == "__main__":
     event_initial_consonant = get_event_initial_consonant(quiz_contents)
     place_names = get_naver_places(event_store, event_category)
 
+    print("테스트")
+    test = event_store+event_initial_consonant
+    print(test)
     for name in place_names:
         # 각 이름의 초성을 추출 (함수 호출)
         current_initials = get_initial_consonant(name)

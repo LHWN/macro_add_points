@@ -19,7 +19,7 @@ from selenium.webdriver.common.options import ArgOptions
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import StaleElementReferenceException
 from datetime import datetime
-from extract_initial_consonant import solve_quiz_by_initial_consonant, get_event_store
+from extract_initial_consonant import solve_quiz_by_initial_consonant, get_event_store, get_event_initial_consonant
 import signal
 import sys
 
@@ -1417,26 +1417,26 @@ LINK_QUIZ_MAPPING = {
 }
 
 INITIAL_CONSONANT_QUIZ_MAPPING = {
-    "스파라 프리미어 슈가링 왁싱 해운대 본점": "키자니아부산",
-    "이비안한의원": "캑터스",
-    "필라테스 위아영 가양등촌점": "노리공작소",
-    "옥스치과의원": "전기박물관",
-    "삼성정형외과": "어울림공원",
-    "꽃한모금 마곡점": "노리공작소",
-    "에시르의원": "화목공방",
+    "스파라 프리미어 슈가링 왁싱 해운대 본점ㅋㅈㄴㅇㅂㅅ": "키자니아부산",
+    "이비안한의원ㅋㅌㅅ": "캑터스",
+    "필라테스 위아영 가양등촌점ㄴㄹㄱㅈㅅ": "노리공작소",
+    "옥스치과의원ㅈㄱㅂㅁㄱ": "전기박물관",
+    "삼성정형외과ㅇㅇㄹㄱㅇ": "어울림공원",
+    "꽃한모금 마곡점ㄴㄹㄱㅈㅅ": "노리공작소",
+    "에시르의원ㅎㅁㄱㅂ": "화목공방",
     "좋은아침한의원 구로디지털점ㄲㅁㅇㄷㅅㄱ": "꿈마을도서관",
-    "좋은아침한의원 구로디지털점": "꿈마을도서관",
-    "에이라인치과병원": "정석볼링장",
-    "더엘리트 PT 연산양정점": "원각사",
-    "보스톤치과": "팡팡존",
-    "달 필라테스 신림점": "장군봉체육관",
-    "시호한의원": "더멀리골프",
-    "": "",
-    "": "",
-    "": "",
-    "": "",
-    "": "",
-    "": "",
+    "좋은아침한의원 구로디지털점ㄹㅍㄷㅅㅎㅇ": "램프댄스학원",
+    "에이라인치과병원ㅈㅅㅂㄹㅈ": "정석볼링장",
+    "더엘리트 PT 연산양정점ㅇㄱㅅ": "원각사",
+    "보스톤치과ㅍㅍㅈ": "팡팡존",
+    "달 필라테스 신림점ㅈㄱㅂㅊㅇㄱ": "장군봉체육관",
+    "시호한의원ㄷㅁㄹㄱㅍ": "더멀리골프",
+    "당신만의가치 벨유의원ㅇㅍㅂㅁㄱ": "우표박물관",
+    "더힘한의원 발산역점ㄱㅅㅂㅎㅎㅂ": "경성별하한복",
+    "메이퓨어 시청역점ㄷㅅㄱ": "덕수궁",
+    "바로고침한의원ㅅㄹㄷㄴㅂㅇ": "살롱드느바에",
+    "서울이앤이치과의원ㅅㅅㅍㅈㅇㅈ": "송쉐프장안점",
+    "서강플러스치과의원ㅇㄸㄹㅇㅅㅈ": "아뜰리에쉘즈",
 }
 
 # # 용돈퀴즈 버튼 클릭
@@ -1613,8 +1613,10 @@ def solve_quiz():
                     find_count += 1
                 elif answer is None and "카테고리" in quiz_contents:
                     # event_store = get_event_store(quiz_contents)
-                    event_store = result
-                    answer = INITIAL_CONSONANT_QUIZ_MAPPING.get(event_store)
+                    event_store = result        
+                    quiz_initial_consonant = get_event_initial_consonant(quiz_contents)
+                    print(quiz_initial_consonant)
+                    answer = INITIAL_CONSONANT_QUIZ_MAPPING.get(event_store+quiz_initial_consonant)
                     if answer is None:
                         answer = solve_quiz_by_initial_consonant(quiz_contents, event_store)
                 else:
