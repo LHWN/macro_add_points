@@ -37,29 +37,19 @@ import sys
 # pkill -f advanced_auto_solver.py
 
 # 1. 껍데기만 있는 옵션 객체 생성
-options = ArgOptions()
+options = XCUITestOptions()
+options.platform_name = "iOS"
+options.automation_name = "XCUITest"
+options.udid = "00008110-000179163A89A01E" # 사용자님의 UDID
+options.bundle_id = "com.cashwalk.cashdoc"
 
-# 2. 모든 capability를 직접 'appium:' 접두사와 함께 추가
-# 이 방식은 automationName이 중복으로 생기는 것을 방지합니다.
-caps = {
-    "platformName": "iOS",
-    "appium:automationName": "XCUITest",
-    "appium:platformVersion": "18.7.2",
-    "appium:deviceName": "iPhone",
-    "appium:udid": "00008110-000179163A89A01E",
-    "appium:bundleId": "com.cashwalk.cashdoc",
-    "appium:noReset": True,
-    "appium:useNewWDA": False,
-    "autoDismissAlerts": False,
-    "appium:newCommandTimeout": 300
-}
+# 꼬임 방지 핵심 옵션 3개
+options.set_capability("appium:usePrebuiltWDA", True)
+options.set_capability("appium:useNewWDA", False)
+options.set_capability("appium:platformVersion", "18.7")
+options.set_capability("appium:wdaLocalPort", 8100)
 
-for key, value in caps.items():
-    options.set_capability(key, value)
-
-# 3. 실행
 driver = webdriver.Remote("http://127.0.0.1:4723", options=options)
-
 
 ## 충돌나면 실행
 ## rm -rf ~/Library/Developer/Xcode/DerivedData/*
@@ -68,6 +58,7 @@ driver = webdriver.Remote("http://127.0.0.1:4723", options=options)
 wait = WebDriverWait(driver, 3)
 
 LINK_QUIZ_MAPPING = {
+    "디자인 슈링크": "https://cashdoc.me/hospitalevent/eventdetail/4220",
     "덴티움 임플란트 49만원": "https://cashdoc.me/hospitalevent/eventdetail/6143",
     "분당 즉각효과 프라임레이즈": "https://cashdoc.me/hospitalevent/eventdetail/7197",
     "이갈이보톡스 코어톡스, 라인은 덤": "https://cashdoc.me/hospitalevent/eventdetail/6974",
@@ -1437,6 +1428,16 @@ INITIAL_CONSONANT_QUIZ_MAPPING = {
     "바로고침한의원ㅅㄹㄷㄴㅂㅇ": "살롱드느바에",
     "서울이앤이치과의원ㅅㅅㅍㅈㅇㅈ": "송쉐프장안점",
     "서강플러스치과의원ㅇㄸㄹㅇㅅㅈ": "아뜰리에쉘즈",
+    "아비쥬의원 여의도ㅈㅁㄱㅇ": "자매공원",
+    "": "",
+    "": "",
+    "": "",
+    "": "",
+    "": "",
+    "": "",
+    "": "",
+    "": "",
+    "": "",
 }
 
 # # 용돈퀴즈 버튼 클릭
@@ -1639,10 +1640,10 @@ def solve_quiz():
                                 text_field.clear()
                                 text_field.send_keys(answer)
                                 text_field.send_keys(Keys.RETURN)
-                                print(answer)
                                 # 정답이면
                                 try:
                                     # X 버튼 클릭 (accessibility id)
+                                    print("정답임")
                                     x_btn = wait.until(
                                             EC.element_to_be_clickable((AppiumBy.ACCESSIBILITY_ID, 'icCloseBlack'))
                                         )
@@ -1912,7 +1913,7 @@ if __name__ == "__main__":
 
     try:
         # 최대 3초 동안만 기다려보고 있으면 클릭
-        index_popup = WebDriverWait(driver, 3).until(
+        index_popup = WebDriverWait(driver, 8).until(
             EC.element_to_be_clickable((AppiumBy.XPATH, '//XCUIElementTypeStaticText[@name="오늘 그만보기"]'))
         )
         index_popup.click()
