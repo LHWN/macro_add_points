@@ -1429,6 +1429,25 @@ INITIAL_CONSONANT_QUIZ_MAPPING = {
     "서울이앤이치과의원ㅅㅅㅍㅈㅇㅈ": "송쉐프장안점",
     "서강플러스치과의원ㅇㄸㄹㅇㅅㅈ": "아뜰리에쉘즈",
     "아비쥬의원 여의도ㅈㅁㄱㅇ": "자매공원",
+    "남스짐능곡점 24시헬스PTㄴㄱㄷㅅㄱ": "능곡도서관",
+    "강산애&더피플 펜션ㅁㅇㅎㅈㅁㄷ": "밀양호전망대",
+    "든든한의원 이천ㄹㅌㅂㅍ": "리틀베프",
+    "메이퓨어의원 목동점ㅇㅁㅅㅂㄱㅇ": "오목수변공원",
+    "남스짐천왕점 헬스&PTㅊㅇㅅ": "천왕산",
+    "남다른한의원ㅇㅂㅇㅌㄴㅅ": "어바웃테니스",
+    "연아한의원 은평녹번ㅅㅅㄱㅅ": "성시경숲",
+    "에시르의원ㄴㅍㄹㄱㅇ": "늘푸른공원",
+    "이비안한의원ㅈㄱㅂㅁㄱ": "전기박물관",
+    "앤퍼센트의원ㅌㄴㅎㅈ": "티니핸즈",
+    "에시르의원ㅅㅅㄱㄷ": "삼산가든",
+    "아비쥬의원 여의도ㄷㅂㄱㅇ": "대방공원",
+    "에이원이비인후과의원ㄱㄹㄱㅈ": "구리광장",
+    "연아한의원 은평녹번ㄴㅂㅅㄱㅇ": "녹번서공원",
+    "메이퓨어의원 목동점ㅇㅁㄱㅇ": "오목공원",
+    "연세미소온치과의원ㅇㅇㅍㄹㅇ": "아이플레이",
+    "에이블짐 신정네거리역점ㅅㅅㅂㅁㄷㅈ": "스시범목동점",
+    "시호한의원ㄷㅌㅁㄷㄱㅇ": "동탄목동공원",
+    "모움피티 동래명륜점ㄷㄹㅅ": "도림사",
     "": "",
     "": "",
     "": "",
@@ -1436,8 +1455,7 @@ INITIAL_CONSONANT_QUIZ_MAPPING = {
     "": "",
     "": "",
     "": "",
-    "": "",
-    "": "",
+    "": "",'
 }
 
 # # 용돈퀴즈 버튼 클릭
@@ -1613,13 +1631,15 @@ def solve_quiz():
                     print("바로 찾기 결과 : ", answer)
                     find_count += 1
                 elif answer is None and "카테고리" in quiz_contents:
-                    # event_store = get_event_store(quiz_contents)
-                    event_store = result        
+                    event_store = get_event_store(quiz_contents)
+                    # event_store = result        
+
+                    print(event_store)
                     quiz_initial_consonant = get_event_initial_consonant(quiz_contents)
                     print(quiz_initial_consonant)
                     answer = INITIAL_CONSONANT_QUIZ_MAPPING.get(event_store+quiz_initial_consonant)
                     if answer is None:
-                        answer = solve_quiz_by_initial_consonant(quiz_contents, event_store)
+                        answer = solve_quiz_by_initial_consonant(quiz_contents)
                 else:
                     print("[", sequence, "] 검색 찾기:", quiz_name)
                     # 빡치게 하는 퀴즈면
@@ -1913,7 +1933,7 @@ if __name__ == "__main__":
 
     try:
         # 최대 3초 동안만 기다려보고 있으면 클릭
-        index_popup = WebDriverWait(driver, 8).until(
+        index_popup = WebDriverWait(driver, 5).until(
             EC.element_to_be_clickable((AppiumBy.XPATH, '//XCUIElementTypeStaticText[@name="오늘 그만보기"]'))
         )
         index_popup.click()

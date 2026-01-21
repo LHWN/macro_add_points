@@ -73,7 +73,7 @@ while True:
     quiz_text = text_field.get_attribute("label")
     print(quiz_text)
 
-    target_words = ["더엘리트"]
+    target_words = ["스페인"]
 
     if not any(word in quiz_text for word in target_words):
         break

@@ -12,6 +12,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from webdriver_manager.chrome import ChromeDriverManager
+from urllib.parse import quote
 
 category_map = {
     "맛집・카페": "90",
@@ -22,11 +23,14 @@ category_map = {
 }
 
 def get_event_store(quiz_contents):
-    match = re.search(r'\d+\.\s+(.*?)\s+클릭', quiz_contents)
-
+    print(f"추출 대상 {quiz_contents}")
+    # match = re.search(r'\[([^\]]+)\]', quiz_contents)
+    # match = re.search(r'1\.\s*(.*?)\s+클릭', quiz_contents)
+    match = re.search(r'1\.\s*\[?([^\]\n]+?)\]?\s*클릭', quiz_contents)
+    
     if match:
         # 그룹(1) 즉, (.*?) 부분만 가져옵니다.
-        event_store = match.group(1)
+        event_store = match.group(1).strip()
         print(f"추출 성공: {event_store}")
     else:
         # 패턴이 맞지 않을 경우 (예: "클릭"이 없거나 형식이 다를 때)
@@ -35,6 +39,7 @@ def get_event_store(quiz_contents):
     
     
 def get_event_category(quiz_contents):
+    
     match = re.search(r'\[([^\]]+)\]\s*카테고리', quiz_contents)
 
     if match:
@@ -82,48 +87,73 @@ def get_naver_places(event_store, event_category):
 
     try:
         # 네이버 검색창으로 이동 (검색어가 포함된 URL)
-        url = f"https://search.naver.com/search.naver?query={event_store}"
+        encoded_query = quote(event_store)
+        url = f"https://m.search.naver.com/search.naver?query={encoded_query}"
         driver.get(url)
         time.sleep(2) # 로딩 대기
 
-        # 2. 검색 결과에서 장소 제목 클릭 
-        # (보통 플레이스 결과의 제목은 'L_v_Y' 또는 관련 클래스명을 가집니다. 
-        # 가장 확실한 건 텍스트로 찾는 것입니다.)
         try:
             # 검색 결과 중 해당 장소 이름을 가진 요소를 찾아 클릭
             wait = WebDriverWait(driver, 10)
-            wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "div[data-loc_plc-doc-id]")))
-
-            # 2. 모든 요소를 리스트로 가져오기 (1개여도 리스트로 들어옴)
-            place_items = driver.find_elements(By.CSS_SELECTOR, "div[data-loc_plc-doc-id]")
-
-            print(f"발견된 장소 개수: {len(place_items)}")
-            place_ids = []
-
-            for item in place_items:
-                # 2. 항목 내에서 장소 이름이 적힌 요소의 텍스트 추출
-                # .YwYLL 클래스나 mark 태그 등을 활용
+            place_section = wait.until(EC.presence_of_element_located(
+                (By.CSS_SELECTOR, ".place_section")
+            ))
+            
+            # .GHAhO 또는 .YwYLL 클래스를 가진 요소만 찾기
+            place_name_elements = []
+            place_name_elements.extend(place_section.find_elements(By.CSS_SELECTOR, ".GHAhO"))
+            place_name_elements.extend(place_section.find_elements(By.CSS_SELECTOR, ".YwYLL"))
+            
+            print(f"place_section 내 발견된 장소 이름 요소 개수: {len(place_name_elements)}")
+            
+            target_id = None
+            
+            # event_store와 일치하는 요소 찾기
+            for place_name_elem in place_name_elements:
                 try:
-                    place_name = item.find_element(By.CSS_SELECTOR, ".place_bluelink").text
-                    print(place_name)
-                    # 3. 변수 event_store와 일치하는지 비교 (공백 제거 후 비교 추천)
-                    if place_name.strip() == event_store.strip():
-                        target_id = item.get_attribute("data-loc_plc-doc-id")
-                        print(f"✅ 일치하는 장소 발견! ID: {target_id}")
+                    # .GHAhO는 직접 텍스트, .YwYLL은 mark 태그 내부 텍스트
+                    if "GHAhO" in place_name_elem.get_attribute("class"):
+                        place_name = place_name_elem.text.strip()
+                    else:  # YwYLL
+                        mark_elem = place_name_elem.find_element(By.TAG_NAME, "mark")
+                        place_name = mark_elem.text.strip()
+                    
+                    print(f"발견된 장소: {place_name}")
+                    
+                    # event_store와 일치하는지 확인
+                    if place_name == event_store:
+                        # 부모 a 태그 찾기 (href 속성이 있는 가장 가까운 a 태그)
+                        parent_link = place_name_elem.find_element(By.XPATH, "./ancestor::a[@href]")
+                        
+                        # href에서 place ID 추출
+                        href = parent_link.get_attribute("href")
+                        match = re.search(r'/(hospital|place)/(\d+)', href)
+                        if match:
+                            target_id = match.group(2)
+                            print(f"✅ 일치하는 장소 발견! Place ID: {target_id}")
+                            
+                            # 클릭
+                            parent_link.click()
+                            time.sleep(2) # 로딩 대기
                         break
-                except:
+                    
+                except Exception as e:
+                    print(f"요소 처리 중 오류: {e}")
                     continue
-                
+                    
             if not target_id:
-                print(f"❌ '{event_store}'와 일치하는 요소를 찾지 못했습니다.")
+                print(f"❌ '{event_store}'와 일치하는 장소를 찾지 못했습니다.")
+                return None
 
         except Exception as e:
             print(f"place 검색 불가: {e}")
+            import traceback
+            traceback.print_exc()
             return None
         
-        filter = category_map.get(event_category, "unknown")
+        filter_code = category_map.get(event_category, "unknown")
         # place 에서 검색
-        url = f"https://m.place.naver.com/place/{target_id}/around?filter={filter}"   
+        url = f"https://m.place.naver.com/place/{target_id}/around?filter={filter_code}"   
         driver.get(url)
         time.sleep(2) # 로딩 대기
         elements = driver.find_elements(By.CSS_SELECTOR, "span.xBZDS")
@@ -160,12 +190,13 @@ def get_initial_consonant(naver_place):
     return ("".join(result)).replace(" ", "")
 
     
-def solve_quiz_by_initial_consonant(quiz_contents, event_store):
-    # event_store = get_event_store(quiz_contents)
+def solve_quiz_by_initial_consonant(quiz_contents):
+    event_store = get_event_store(quiz_contents)
     event_category = get_event_category(quiz_contents)
     event_initial_consonant = get_event_initial_consonant(quiz_contents)
     place_names = get_naver_places(event_store, event_category)
 
+    print(event_store)
     for name in place_names:
         # 각 이름의 초성을 추출 (함수 호출)
         current_initials = get_initial_consonant(name)
@@ -180,14 +211,14 @@ def solve_quiz_by_initial_consonant(quiz_contents, event_store):
 
 if __name__ == "__main__":
     quiz_contents = '1. 좋은아침한의원 구로디지털점 클릭 2. [주변] 탭 클릭 3. [놀거리] 카테고리 클릭 4. [ㄲㅁㅇㄷㅅㄱ]인 장소를 찾아 정답 입력(띄어쓰기X) '
+    # quiz_contents = '1. [아비쥬의원 여의도] 클릭 2. [주변] 탭 클릭 3. [명소] 카테고리 4. [ㄷㅂㄱㅇ]인 장소를 찾아 정답 입력(띄어쓰기X) '
+    # quiz_contents = '1. [남스짐천왕점 헬스&PT] 클릭 2. [주변] 탭 클릭 3. [명소] 카테고리 클릭 4. [ㅊㅇㅅ]인 장소를 찾아 정답 입력(띄어쓰기X)'
+
     event_store = get_event_store(quiz_contents)
     event_category = get_event_category(quiz_contents)
     event_initial_consonant = get_event_initial_consonant(quiz_contents)
     place_names = get_naver_places(event_store, event_category)
 
-    print("테스트")
-    test = event_store+event_initial_consonant
-    print(test)
     for name in place_names:
         # 각 이름의 초성을 추출 (함수 호출)
         current_initials = get_initial_consonant(name)
