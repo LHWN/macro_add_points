@@ -213,6 +213,7 @@ if __name__ == "__main__":
     quiz_contents = '1. 좋은아침한의원 구로디지털점 클릭 2. [주변] 탭 클릭 3. [놀거리] 카테고리 클릭 4. [ㄲㅁㅇㄷㅅㄱ]인 장소를 찾아 정답 입력(띄어쓰기X) '
     # quiz_contents = '1. [아비쥬의원 여의도] 클릭 2. [주변] 탭 클릭 3. [명소] 카테고리 4. [ㄷㅂㄱㅇ]인 장소를 찾아 정답 입력(띄어쓰기X) '
     # quiz_contents = '1. [남스짐천왕점 헬스&PT] 클릭 2. [주변] 탭 클릭 3. [명소] 카테고리 클릭 4. [ㅊㅇㅅ]인 장소를 찾아 정답 입력(띄어쓰기X)'
+    # quiz_contents = '1. 강산애&더피플 펜션 클릭 2. [주변] 탭 클릭 3. [명소] 카테고리 클릭 4. [ㅁㅇㅎㅈㅁㄷ]인 장소를 찾아 정답 입력(띄어쓰기X) '
 
     event_store = get_event_store(quiz_contents)
     event_category = get_event_category(quiz_contents)

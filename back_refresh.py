@@ -49,11 +49,8 @@ driver = webdriver.Remote("http://127.0.0.1:4723", options=options)
 # driver = webdriver.Remote("http://localhost:4723", options=options)
 
 wait = WebDriverWait(driver, 10)
-
-while True:
-    # back_btn = driver.find_elements(AppiumBy.ACCESSIBILITY_ID, "뒤로")
-    # if back_btn:
-    #     back_btn[0].click()
+def back_refresh():
+# while True:
 
     previous_btn = wait.until(
         EC.element_to_be_clickable((AppiumBy.ACCESSIBILITY_ID, 'BackButton'))
@@ -73,9 +70,9 @@ while True:
     quiz_text = text_field.get_attribute("label")
     print(quiz_text)
 
-    target_words = ["스페인"]
+    # target_words = ["광명점"]
 
-    if not any(word in quiz_text for word in target_words):
-        break
+    # if not any(word in quiz_text for word in target_words):
+    #     break
 
-    sleep(5)
+    sleep(2)
