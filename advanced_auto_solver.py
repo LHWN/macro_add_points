@@ -1,27 +1,18 @@
 from appium import webdriver
-# from appium.options.ios import XCUITestOptions
 from appium.webdriver.common.appiumby import AppiumBy
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from urllib.parse import quote_plus
-from selenium.webdriver.common.by import By
-from selenium.common.exceptions import TimeoutException
-import subprocess, platform, time
 from control_chrome import search_answer 
 from selenium import webdriver
 from time import sleep
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
+import time
+from selenium.common.exceptions import TimeoutException
 from appium.options.ios import XCUITestOptions
-from appium import webdriver
-from selenium.webdriver.common.options import ArgOptions
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import StaleElementReferenceException
 from datetime import datetime
 from extract_initial_consonant import solve_quiz_by_initial_consonant, get_event_store, get_event_initial_consonant
-import signal
-import sys
+import signal, sys
 from constants_event import LINK_QUIZ_MAPPING
 from constants_store import INITIAL_CONSONANT_QUIZ_MAPPING
 
@@ -45,29 +36,30 @@ options.automation_name = "XCUITest"
 options.udid = "00008110-000179163A89A01E" # 사용자님의 UDID
 options.bundle_id = "com.cashwalk.cashdoc"
 
-# 꼬임 방지 핵심 옵션 3개
-options.set_capability("appium:usePrebuiltWDA", True)
-options.set_capability("appium:useNewWDA", False)
+# 1. 맥북을 옮겼을 때 발생할 수 있는 캐시 충돌 방지
+# options.set_capability("appium:clearSystemFiles", True)
+
+# 2. 핵심 수정: usePrebuiltWDA를 False로 바꾸거나 상황에 따라 조절
+# 두 맥북을 오갈 때는 True보다 False가 훨씬 안정적입니다.
+options.set_capability("appium:usePrebuiltWDA", False)
+
+# 3. WDA가 꼬였을 때 자동으로 재설치 시도
+options.set_capability("appium:useNewWDA", False) # 매번 삭제는 안 하되, 문제 시 대응
+
+# 4. (선택사항) WDA를 빌드할 때 사용할 Bundle ID 명시 (XCode 설정과 일치해야 함)
+# 보통 'com.facebook.WebDriverAgentRunner'를 사용하거나 
+# 직접 만드신 Bundle ID가 있다면 아래에 적어주세요.
+options.set_capability("appium:updatedWDABundleId", "com.lhwn.WebDriverAgentRunner")
+
 options.set_capability("appium:platformVersion", "18.7")
 options.set_capability("appium:wdaLocalPort", 8100)
 
-driver = webdriver.Remote("http://127.0.0.1:4723", options=options)
-
+driver = webdriver.Remote("http://127.0.0.1:4723", options=options)#
 ## 충돌나면 실행
 ## rm -rf ~/Library/Developer/Xcode/DerivedData/*
 # driver = webdriver.Remote("http://localhost:4723", options=options)
 
 wait = WebDriverWait(driver, 3)
-
-
-# # 용돈퀴즈 버튼 클릭
-# money_quiz_button = wait.until(
-#     lambda d: d.find_element(AppiumBy.ACCESSIBILITY_ID, "용돈퀴즈 용돈퀴즈")  # Accessibility ID 정확히 확인
-# )
-# money_quiz_button.click()
-
-# 퀴즈 목록
-# (//XCUIElementTypeImage[@name="imgLivequiz"])[1]
 
 def solve_quiz():
     start_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -79,6 +71,7 @@ def solve_quiz():
     try:
         while True:
             rohasel = False
+            inmode = False 
             try:
                 result = check_quiz_isAvailabe()
             except Exception as e:
@@ -112,52 +105,6 @@ def solve_quiz():
 
                 print("퀴즈 내용 전체:", quiz_contents)
                 print("[", sequence, "] quiz_name", quiz_name)   
-
-                # if quiz_name == "":
-                #     print("이벤트 퀴즈 아님 sequence : ", sequence, " quiz_name : ", quiz_name)
-                    
-                #     previous_btn = driver.find_elements(AppiumBy.ACCESSIBILITY_ID, "icCPQBackBlack")
-                #     if previous_btn:
-                #         previous_btn[0].click()
-
-                #     try:
-                #         alert = driver.switch_to.alert
-                #         alert_text = alert.text
-                #         alert.accept()
-                #         print(f"✅ 시스템 알림창 해결: {alert_text}")
-
-                #         previous_btn = wait.until(
-                #             EC.element_to_be_clickable((AppiumBy.ACCESSIBILITY_ID, 'icCPQBackBlack'))
-                #         )
-                #         previous_btn.click()
-                #     except Exception:
-                #         # 시스템 알림이 없으면 조용히 통과
-                #         pass
-                #     # 1번 못풀면 2번으로 바꾸고, 2번 못풀면 1번으로 바꾸면서 계속 확인
-                #     if sequence == 1:
-                #         sequence = 2
-                #     elif sequence == 2:
-                #         sequence = 1
-                #     continue
-
-
-                    # 네트워크 오류 나면 처리
-                    # try:
-                    #     alert = driver.switch_to.alert
-                    #     alert_text = alert.text  # 텍스트를 먼저 가져옴
-                    #     alert.accept()
-                    #     print(f"✅ 시스템 알림창 해결: {alert_text}")
-                    #     previous_btn = driver.find_elements(AppiumBy.ACCESSIBILITY_ID, "icCPQBackBlack")
-                    #     if previous_btn:
-                    #         previous_btn[0].click()
-
-                    # except NoAlertPresentException:
-                    #     # 알림창이 없으면 그냥 아무것도 안 하고 넘어감
-                    #     pass
-
-
-                        
-
                     
                 try:
                     # 정답 입력하기 버튼 클릭
@@ -208,16 +155,10 @@ def solve_quiz():
                 except Exception as e:
                     print(e)
 
-                # handles = driver.window_handles
-                # driver.switch_to.window(handles[-1])  # 마지막 윈도우 핸들로 전환
-                # driver.close()  # 현재 윈도우 닫기
-                
                 try:
                     sleep(2)
                     driver.activate_app("com.cashwalk.cashdoc")
 
-                    # 유효한 문제면 풀기
-                    # 정답 입력하기 버튼 클릭
                     insert_answer = wait.until(
                         EC.element_to_be_clickable((AppiumBy.XPATH, "//XCUIElementTypeStaticText[@name='정답 입력하기']"))
                     )
@@ -258,14 +199,12 @@ def solve_quiz():
                                 text_field.click()
                                 
                                 # 입력 시도 (send_keys 우선, 실패하면 set_value)
-                                print(answer)
                                 text_field.clear()
                                 text_field.send_keys(answer)
                                 text_field.send_keys(Keys.RETURN)
                                 # 정답이면
                                 try:
                                     # X 버튼 클릭 (accessibility id)
-                                    print("정답임")
                                     x_btn = wait.until(
                                             EC.element_to_be_clickable((AppiumBy.ACCESSIBILITY_ID, 'icCloseBlack'))
                                         )
@@ -289,29 +228,57 @@ def solve_quiz():
                         # 로하셀 찾았으면 다음 턴
                         if rohasel:
                             continue
+                    elif quiz_name == "인모드리프팅":
+                        event_ids = ["1643", "1827"]
+                        for event_id in event_ids:
+                            answer = "https://cashdoc.me/hospitalevent/eventdetail/" + event_id
+                            print(f"인모드리프팅 {event_id} 시도")
+                            try:
+                                text_field = wait.until(
+                                    EC.element_to_be_clickable((AppiumBy.XPATH, "//XCUIElementTypeTextField"))
+                                )
+                                text_field.click()
+                                
+                                text_field.clear()
+                                text_field.send_keys(answer)
+                                text_field.send_keys(Keys.RETURN)
+                                # 정답이면
+                                try:
+                                    # X 버튼 클릭 (accessibility id)
+                                    x_btn = wait.until(
+                                            EC.element_to_be_clickable((AppiumBy.ACCESSIBILITY_ID, 'icCloseBlack'))
+                                        )
+                                    x_btn.click()
+                                    
+                                    # <- 버튼 클릭
+                                    previous_btn = wait.until(
+                                            EC.element_to_be_clickable((AppiumBy.ACCESSIBILITY_ID, 'icCPQBackBlack'))
+                                        )
+                                    previous_btn.click()
+                                    inmode = True 
+                                except Exception as e: 
+                                    # for 문만 빠져나가기 
+                                    print("인모드리프팅 정답 아님")
+                                    continue
+                            except Exception as e:
+                                # 입력창 자체를 못 찾는 경우 (TimeoutException 등)
+                                print(f"⚠️ 화면에 입력창이 없습니다. 팝업이 떠있는지 확인하세요: {e}")
+                                # 여기서 팝업을 강제로 닫는 로직을 넣으면 다음 루프가 살아납니다.
+
+                        # 인모드리프팅 찾았으면 다음 턴
+                        if inmode:
+                            continue
                     else:
                         event_id = search_answer(wait_seconds=20, keep_open=False, quiz_name=quiz_name)
                         answer = "https://cashdoc.me/hospitalevent/eventdetail/" + event_id
                         print("검색 찾기 결과 : ", answer)
                     search_count += 1
                    
-
-                print("정답:", answer)
-
-
-                # 이벤트 정답 입력
                 # 이벤트 정답 입력 (텍스트 필드에 answer 넣기)
                 try:
                     text_field = wait.until(
                         EC.element_to_be_clickable((AppiumBy.XPATH, "//XCUIElementTypeTextField[@value='띄어쓰기 없이 입력해 주세요.']"))
                     )
-                    # 포커스 및 내용 삭제
-                    # text_field.click()
-                    # try:
-                    #     text_field.clear()
-                    # except Exception:
-                    #     pass
-
                     # 입력 시도 (send_keys 우선, 실패하면 set_value)
                     try:
                         text_field.send_keys(answer)
@@ -327,14 +294,6 @@ def solve_quiz():
 
                     
                     text_field.send_keys(Keys.RETURN)
-
-
-                    
-                    # 정답 확인 버튼 클릭
-                    # confirm_btn = wait.until(
-                    #     EC.element_to_be_clickable((AppiumBy.XPATH, '//XCUIElementTypeStaticText[@name="정답 확인"]'))
-                    # )
-                    # confirm_btn.click()
                 except Exception as e:
                     print("정답 입력/제출 실패:", e)
 
@@ -385,11 +344,6 @@ signal.signal(signal.SIGINT, graceful_exit)
 
 # 목록에서 미리 성형 이벤트인지 확인 
 def check_quiz_isAvailabe():
-    # 목록에서 퀴즈명 가져오기
-    # text_field = wait.until(
-    #     EC.element_to_be_clickable((AppiumBy.XPATH, "//XCUIElementTypeCollectionView/XCUIElementTypeCell[1]//XCUIElementTypeStaticText"))
-    # )
-    # quiz_text = text_field.get_attribute("label")
     for _ in range(3):  # 최대 3번 재시도
         try:
             text_field = wait.until(
@@ -408,13 +362,6 @@ def check_quiz_isAvailabe():
 
     return quiz_text
     
-    # 목록만 보고 성형 이벤트인지 판단 힘듦
-    # if "이벤트" in quiz_text:
-    #     print("이벤트 포함 확인")
-    #     return True
-    # else:
-    #     return False
-
 def back_refresh():
     print("back_refresh 진입")
 
@@ -429,17 +376,6 @@ def back_refresh():
     money_quiz_button.click()
 
     print("용돈퀴즈 클릭")
-
-    # text_field = wait.until(
-    #     EC.element_to_be_clickable((AppiumBy.XPATH, "//XCUIElementTypeCollectionView/XCUIElementTypeCell[1]//XCUIElementTypeStaticText"))
-    # )
-    # quiz_text = text_field.get_attribute("label")
-    # print(quiz_text)
-
-    # target_words = ["카복시", "더원츠의원", "발지압"]
-
-    # if not any(word in quiz_text for word in target_words):
-    #     break
 
     sleep(5)
 
@@ -472,18 +408,10 @@ def solve_effective_quiz(quiz_name, sequence):
     print("정답 URL:", answer)
 
     # 이벤트 정답 입력
-    # 이벤트 정답 입력 (텍스트 필드에 answer 넣기)
     try:
         text_field = wait.until(
             EC.element_to_be_clickable((AppiumBy.XPATH, "//XCUIElementTypeTextField[@value='띄어쓰기 없이 입력해 주세요.']"))
         )
-        # 포커스 및 내용 삭제
-        # text_field.click()
-        # try:
-        #     text_field.clear()
-        # except Exception:
-        #     pass
-
         # 입력 시도 (send_keys 우선, 실패하면 set_value)
         try:
             text_field.send_keys(answer)
@@ -499,14 +427,6 @@ def solve_effective_quiz(quiz_name, sequence):
 
         
         text_field.send_keys(Keys.RETURN)
-
-
-        
-        # 정답 확인 버튼 클릭
-        # confirm_btn = wait.until(
-        #     EC.element_to_be_clickable((AppiumBy.XPATH, '//XCUIElementTypeStaticText[@name="정답 확인"]'))
-        # )
-        # confirm_btn.click()
     except Exception as e:
         print("정답 입력/제출 실패:", e)
 
@@ -548,7 +468,6 @@ if __name__ == "__main__":
         lambda d: d.find_element(AppiumBy.ACCESSIBILITY_ID, "용돈퀴즈 용돈퀴즈")  # Accessibility ID 정확히 확인
     )
     money_quiz_button.click()
-    # driver.get("cashdoc://moneyquiz")
 
     print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} 프로그램 시작", flush=True)
 

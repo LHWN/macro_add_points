@@ -23,9 +23,6 @@ category_map = {
 }
 
 def get_event_store(quiz_contents):
-    print(f"추출 대상 {quiz_contents}")
-    # match = re.search(r'\[([^\]]+)\]', quiz_contents)
-    # match = re.search(r'1\.\s*(.*?)\s+클릭', quiz_contents)
     match = re.search(r'1\.\s*\[?([^\]\n]+?)\]?\s*클릭', quiz_contents)
     
     if match:
@@ -196,7 +193,6 @@ def solve_quiz_by_initial_consonant(quiz_contents):
     event_initial_consonant = get_event_initial_consonant(quiz_contents)
     place_names = get_naver_places(event_store, event_category)
 
-    print(event_store)
     for name in place_names:
         # 각 이름의 초성을 추출 (함수 호출)
         current_initials = get_initial_consonant(name)
@@ -231,7 +227,3 @@ if __name__ == "__main__":
             found_place = name
             print(f"🎯 찾았습니다! 일치하는 장소: {found_place}")
             break
-
-# # 실행 결과
-# word = "중앙공원"
-# print(get_initial_consonant(word))  # 출력: ㅈㅇㄱㅇ

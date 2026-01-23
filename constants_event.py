@@ -1,5 +1,6 @@
 
 LINK_QUIZ_MAPPING = {
+    "굿센치과의원 (2025) | 당당하게 스마일 원데이 치아미백 3회": "https://cashdoc.me/hospitalevent/eventdetail/3995",
     "팅커벨 -다이어트변비환": "https://cashdoc.me/hospitalevent/eventdetail/4141",
     "디자인 슈링크": "https://cashdoc.me/hospitalevent/eventdetail/4220",
     "덴티움 임플란트 49만원": "https://cashdoc.me/hospitalevent/eventdetail/6143",
