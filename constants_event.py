@@ -1,5 +1,10 @@
 
 LINK_QUIZ_MAPPING = {
+    "❤뷰❤엘라스티꿈 실리프팅": "https://cashdoc.me/hospitalevent/eventdetail/5703",
+    "프리미엄 가넷, 커스텀 울쎄라": "https://cashdoc.me/hospitalevent/eventdetail/6922",
+    "이마눈썹 거상 실리프팅 비절개눈매교정": "https://cashdoc.me/hospitalevent/eventdetail/6609",
+    "V라인 슈링크 유니버스 100샷": "https://cashdoc.me/hospitalevent/eventdetail/6727",
+    "샤인유_실루엣소프트 실리프팅 6줄": "https://cashdoc.me/hospitalevent/eventdetail/7046",
     "굿센치과의원 (2025) | 당당하게 스마일 원데이 치아미백 3회": "https://cashdoc.me/hospitalevent/eventdetail/3995",
     "팅커벨 -다이어트변비환": "https://cashdoc.me/hospitalevent/eventdetail/4141",
     "디자인 슈링크": "https://cashdoc.me/hospitalevent/eventdetail/4220",
@@ -74,7 +79,7 @@ LINK_QUIZ_MAPPING = {
     "에이탑 올리프팅": "https://cashdoc.me/hospitalevent/eventdetail/5467",
     "베리굿♡V라인 실리프팅": "https://cashdoc.me/hospitalevent/eventdetail/1894",
     "HOT 올리지오 리프팅": "https://cashdoc.me/hospitalevent/eventdetail/1424",
-    "인모드리프팅": "https://cashdoc.me/hospitalevent/eventdetail/1643",
+    # "인모드리프팅": "https://cashdoc.me/hospitalevent/eventdetail/1643",
     # "인모드리프팅": "https://cashdoc.me/hospitalevent/eventdetail/1827",
     "민트실리프팅": "https://cashdoc.me/hospitalevent/eventdetail/1828",
     "❤뷰❤써마지 FLX 리프팅": "https://cashdoc.me/hospitalevent/eventdetail/5705",
